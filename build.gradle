@@ -1,4 +1,6 @@
 plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
+    id 'checkstyle'
     id 'java'
 }
 
@@ -9,11 +11,34 @@ repositories {
 dependencies {
     compile 'org.slf4j:slf4j-api:1.7.21'
     testCompile 'junit:junit:4.12'
+
+    // Immutables
     annotationProcessor 'org.immutables:value:2.6.1'
     compileOnly 'org.immutables:value:2.6.1:annotations'
+
+    // gson
+    compile 'com.google.code.gson:gson:2.8.4'
+
+    // Immutables gson
+    compile 'org.immutables:gson:2.6.1'
+
 }
 
-// jar {
-//     manifest {
-//     }
-// }
+checkstyle {
+    toolVersion '7.6.1'
+    configFile = file("checkstyle.xml")
+}
+
+checkstyleMain {
+    enabled = true
+}
+
+checkstyleTest {
+    enabled = false
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'TestProtocol'
+    }
+}
