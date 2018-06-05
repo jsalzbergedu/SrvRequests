@@ -1,5 +1,7 @@
 package com.ncsurobotics.srvrequests;
-import org.immutables.gson.Gson;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import org.immutables.value.Value;
 
 /**
@@ -9,15 +11,15 @@ import org.immutables.value.Value;
  */
 @DefaultStyle
 @Value.Immutable
-@Gson.TypeAdapters(emptyAsNulls = true)
-public interface SourceList extends Request {
+@JsonSerialize(as = ImmutableSourceList.class)
+@JsonDeserialize(as = ImmutableSourceList.class)
+public interface SourceList extends SrvRequest {
     /**
-     * A marker feild, allowing the serialized
-     * form of this object to be deserialized.
-     * @return a useless value.
+     * Allow SourceList to accept a visitor.
+     * @return what visit returns.
      */
-    @Value.Default
-    default boolean isSourceList() {
-        return true;
-    };
+    @Override
+    default <T> T accept(RequestVisitor<T> v) {
+        return v.visit(this);
+    }
 }

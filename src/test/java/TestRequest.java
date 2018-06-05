@@ -1,13 +1,9 @@
 package com.ncsurobotics.srvrequests;
-import java.util.ServiceLoader;
+import java.io.IOException;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapterFactory;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
-import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.Request;
 
 import junit.framework.TestCase;
 
@@ -22,133 +18,91 @@ public class TestRequest extends TestCase {
     public static final int PORT = 4006;
 
     /**
-     * Flag set to false once
-     * gson has been setup
+     * An object mapper to deserialize objects with.
      */
-    private boolean gsonNeedsSetup;
+    private ObjectMapper mapper;
 
     /**
-     * A gson object for serialization
-     * and deserialization
-     */
-    private Gson gson;
-
-    /**
-     * Set up the gson object.
+     * Set up the object mapper.
      * TODO get the @Before annotation to work
      */
-    @Before
     public void setup() {
-        /*
-         * Boilerplate for registering
-         * Immutables types with gson's
-         * json type registry
-         */
-        if (gson == null) { 
-            var gsonBuilder = new GsonBuilder();
-            for (var factory : ServiceLoader.load(TypeAdapterFactory.class)) {
-                gsonBuilder.registerTypeAdapterFactory(factory);
-            }
-            gson = gsonBuilder.create();
+        if (mapper == null) {
+            mapper = new ObjectMapper();
         }
     }
 
     @Test
-    public void testDispatch() {
-        class IsLifecycleGet {
-            public boolean visit(Request r) {
-                // A more specific subtype could not be dispatched.
-                return false;
-            }
-
-            public boolean visit(LifecycleGet r) {
-                return true;
-            }
-        }
+    public void testOptionalRequests() {
         var request = ImmutableLifecycleGet.builder().build();
-        assertTrue(new IsLifecycleGet().visit(request));
+        var optionalRequests = new RequestFactory(request).optionalRequests();
+        /*
+         * Both of the following should fail
+         * if OptionalRequests does not contain a LifecycleGet
+         */
+        assertTrue(optionalRequests.lifecycleGet().isPresent());
+        optionalRequests.lifecycleGet().get();
+        /*
+         * There should be no other feilds in optionalRequests
+         */
+        assertFalse(optionalRequests.sourceList().isPresent());
     }
 
     @Test
-    public void testLifecycleGet() {
+    public void testLifecycleGet() throws IOException {
         setup();
         final var get = ImmutableLifecycleGet.builder().build();
-        final var json = gson.toJson(get);
+        final var json = mapper.writeValueAsString(get);
         /*
          * When raw string literals come around
          * http://openjdk.java.net/jeps/326
          * these should all be switched to raw
          */
-        assertEquals("{\"isLifecycleGet\":true}", json);
+        assertEquals("{\"@class\":\"com.ncsurobotics.srvrequests.ImmutableLifecycleGet\"}",
+                     json);
     }
 
     @Test
-    public void testLifecycleKill() {
+    public void testLifecycleKill() throws IOException {
         setup();
         final var kill = ImmutableLifecycleKill.builder().build();
-        final var json = gson.toJson(kill);
-        assertEquals("{\"isLifecycleKill\":true}", json);
+        final var json = mapper.writeValueAsString(kill);
+        assertEquals("{\"@class\":\"com.ncsurobotics.srvrequests.ImmutableLifecycleKill\"}",
+                     json);
     }
 
     @Test
-    public void testLifecycleStart() {
+    public void testLifecycleStart() throws IOException {
         setup();
         final var start = ImmutableLifecycleStart.builder().build();
-        final var json = gson.toJson(start);
-        assertEquals("{\"isLifecycleStart\":true}", json);
+        final var json = mapper.writeValueAsString(start);
+        assertEquals("{\"@class\":\"com.ncsurobotics.srvrequests.ImmutableLifecycleStart\"}",
+                     json);
     }
 
     @Test
-    public void testSourceClose() {
+    public void testSourceClose() throws IOException {
         setup();
         final var close = ImmutableSourceClose.builder()
                           .id((byte) 0)
                           .build();
-        final var json = gson.toJson(close);
-        assertEquals("{\"isSourceClose\":true,\"id\":0}", json);
+        assertEquals(close.id(), 0);
+        final var json = mapper.writeValueAsString(close);
+        assertEquals("{\"@class\":\"com.ncsurobotics.srvrequests.ImmutableSourceClose\",\"id\":0}",
+                     json);
     }
 
     @Test
-    public void testSourceList() {
+    public void testSourceList() throws IOException {
         setup();
         final var list = ImmutableSourceList.builder().build();
-        final var json = gson.toJson(list);
-        assertEquals("{\"isSourceList\":true}", json);
+        final var json = mapper.writeValueAsString(list);
+        assertEquals("{\"@class\":\"com.ncsurobotics.srvrequests.ImmutableSourceList\"}",
+                     json);
     }
 
     @Test
-    public void testDeserialize() {
-        setup();
-        final var name = "dummyname";
-        final var open = ImmutableSourceOpen.builder()
-                         .name(name)
-                         .port(PORT)
-                         .build();
-        final var requests = ImmutableRequests.builder()
-                             .request(open);
-        final var json = gson.toJson(requests);
-        /*
-         * If this fails, then there is a problem with the deserialization
-         */
-        final var deserialized = gson.fromJson(json, Requests.class);
-        throw new RuntimeException(deserialized.toString());
-        // throw new RuntimeException(gson.toJson(deserialized));
-        // /*
-        //  * If this fails, then there is a problem with the type
-        //  * it is deserialized into. Specifically, if it throws
-        //  * NoSuchElementException, then it is not being deserialized
-        //  * into one of the Requests.
-        //  */
-        // final var deserializedObj = deserialized.request().get();
-        // /*
-        //  * If this fails, then it is not being deserialized into
-        //  * a SourceOpen request as it should be
-        //  */
-        // final var deserializedCast = (SourceOpen) deserializedObj;
-    }
-
-    @Test
-    public void testSourceOpen() {
+    public void testSourceOpen() throws IOException {
         setup();
         final var name = "Test stream name";
         final var open = ImmutableSourceOpen.builder()
@@ -156,10 +110,29 @@ public class TestRequest extends TestCase {
                          .port(PORT)
                          .build();
         assertEquals(open.name(), name);
-        final var json = gson.toJson(open);
-        assertEquals(String.format("{\"isSourceOpen\":true,\"name\":\"%s\",\"port\":%d}",
-                                   name, PORT),
+        assertEquals(open.port(), PORT);
+        final var json = mapper.writeValueAsString(open);
+        assertEquals("{\"@class\":\"com.ncsurobotics.srvrequests.ImmutableSourceOpen\",\"name\":\"Test stream name\",\"port\":4006}",
                      json);
+    }
+
+    @Test
+    public void testDeserialize() throws IOException {
+        setup();
+        final var name = "dummyname";
+        final var open = ImmutableSourceOpen.builder()
+                         .name(name)
+                         .port(PORT)
+                         .build();
+        final var requests = ImmutableRequests.builder()
+                             .request(open)
+                             .build();
+        final var json = mapper.writeValueAsString(requests);
+        final var deserd = mapper.readValue(json, Requests.class).request();
+        final var optionalRequests = new RequestFactory(deserd).optionalRequests();
+        final var deserdOpen = optionalRequests.sourceOpen().get();
+        assertEquals(name, deserdOpen.name());
+        assertEquals(PORT, deserdOpen.port());
     }
 
 }

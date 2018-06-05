@@ -1,5 +1,4 @@
 plugins {
-    id 'com.github.johnrengelman.shadow' version '2.0.4'
     id 'checkstyle'
     id 'java'
 }
@@ -16,12 +15,10 @@ dependencies {
     annotationProcessor 'org.immutables:value:2.6.1'
     compileOnly 'org.immutables:value:2.6.1:annotations'
 
-    // gson
-    compile 'com.google.code.gson:gson:2.8.4'
-
-    // Immutables gson
-    compile 'org.immutables:gson:2.6.1'
-
+    // Jackson
+    compile 'com.fasterxml.jackson.core:jackson-core:2.9.5'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.9.5'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.5'
 }
 
 checkstyle {
@@ -39,6 +36,5 @@ checkstyleTest {
 
 jar {
     manifest {
-        attributes 'Main-Class': 'TestProtocol'
     }
 }

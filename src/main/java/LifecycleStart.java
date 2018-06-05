@@ -1,5 +1,7 @@
 package com.ncsurobotics.srvrequests;
-import org.immutables.gson.Gson;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import org.immutables.value.Value;
 
 /**
@@ -8,15 +10,16 @@ import org.immutables.value.Value;
  */
 @DefaultStyle
 @Value.Immutable
-@Gson.TypeAdapters(emptyAsNulls = true)
-public interface LifecycleStart extends Request {
+@JsonSerialize(as = ImmutableLifecycleStart.class)
+@JsonDeserialize(as = ImmutableLifecycleStart.class)
+public interface LifecycleStart extends SrvRequest {
+
     /**
-     * A marker feild, allowing the serialized
-     * form of this object to be deserialized.
-     * @return a useless value.
+     * Allow LifecycleStart to accept a visitor.
+     * @return what visit returns.
      */
-    @Value.Default
-    default boolean isLifecycleStart() {
-        return true;
-    };
+    @Override
+    default <T> T accept(RequestVisitor<T> v) {
+        return v.visit(this);
+    }
 }

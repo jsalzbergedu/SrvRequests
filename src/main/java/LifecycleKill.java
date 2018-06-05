@@ -1,21 +1,25 @@
 package com.ncsurobotics.srvrequests;
-import org.immutables.gson.Gson;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import org.immutables.value.Value;
+
 /**
  * A request to kill the server.
  * @author Jacob Salzberg
  */
 @DefaultStyle
 @Value.Immutable
-@Gson.TypeAdapters
-public interface LifecycleKill extends Request {
+@JsonSerialize(as = ImmutableLifecycleKill.class)
+@JsonDeserialize(as = ImmutableLifecycleKill.class)
+public interface LifecycleKill extends SrvRequest {
+
     /**
-     * A marker feild, allowing the serialized
-     * form of this object to be deserialized.
-     * @return a useless value.
+     * Allow LifecycleKill to accept a visitor.
+     * @return what visit returns.
      */
-    @Value.Default
-    default boolean isLifecycleKill() {
-        return true;
-    };
+    @Override
+    default <T> T accept(RequestVisitor<T> v) {
+        return v.visit(this);
+    }
 }

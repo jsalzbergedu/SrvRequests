@@ -1,5 +1,7 @@
 package com.ncsurobotics.srvrequests;
-import org.immutables.gson.Gson;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
 import org.immutables.value.Value;
 
 /**
@@ -12,19 +14,18 @@ import org.immutables.value.Value;
  * @author Jacob Salzberg
  */
 @DefaultStyle
-@Value.Style(stagedBuilder = true)
 @Value.Immutable
-@Gson.TypeAdapters(emptyAsNulls = true)
-public interface SourceClose extends Request {
+@JsonSerialize(as = ImmutableSourceClose.class)
+@JsonDeserialize(as = ImmutableSourceClose.class)
+public interface SourceClose extends SrvRequest {
     /**
-     * A marker feild, allowing the serialized
-     * form of this object to be deserialized.
-     * @return a useless value.
+     * Allow SourceClose to accept a visitor.
+     * @return what visit returns.
      */
-    @Value.Default
-    default boolean isSourceClose() {
-        return true;
-    };
+    @Override
+    default <T> T accept(RequestVisitor<T> v) {
+        return v.visit(this);
+    }
 
     /**
      * Return the id of the stream.
