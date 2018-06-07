@@ -1,10 +1,14 @@
 plugins {
     id 'checkstyle'
     id 'java'
+    id 'maven-publish'
 }
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
+
+group = 'org.ncsurobotics'
+version = '0.2.0'
 
 repositories {
     jcenter()
@@ -37,7 +41,10 @@ checkstyleTest {
     enabled = false
 }
 
-jar {
-    manifest {
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
     }
 }
