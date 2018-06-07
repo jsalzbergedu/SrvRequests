@@ -1,5 +1,7 @@
 package com.ncsurobotics.srvrequests;
 import java.io.IOException;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -23,19 +25,52 @@ public class TestRequest extends TestCase {
     private ObjectMapper mapper;
 
     /**
+     * For sending requests.
+     */
+    private RequestSender sender;
+
+    /**
+     * For receiving requests.
+     */
+    private RequestReceiver receiver;
+
+    /**
+     * Mock input stream.
+     */
+    private PipedInputStream input;
+
+    /**
+     * Mock output stream.
+     */
+    private PipedOutputStream output;
+
+    /**
      * Set up the object mapper.
      * TODO get the @Before annotation to work
      */
     public void setup() {
-        if (mapper == null) {
-            mapper = new ObjectMapper();
+        try {
+            if (mapper == null) {
+                mapper = new ObjectMapper();
+                input = new PipedInputStream();
+                output = new PipedOutputStream(input);
+                receiver = RequestReceiver.builder()
+                           .stream(input)
+                           .mapper(mapper)
+                           .build();
+                sender = RequestSender.builder()
+                         .stream(output)
+                         .mapper(mapper)
+                         .build();
+            }
+        } catch (IOException e) {
         }
     }
 
     @Test
     public void testOptionalRequests() {
         var request = ImmutableLifecycleGet.builder().build();
-        var optionalRequests = new RequestFactory(request).optionalRequests();
+        var optionalRequests = RequestFactory.optionalRequests(request);
         /*
          * Both of the following should fail
          * if OptionalRequests does not contain a LifecycleGet
@@ -129,7 +164,7 @@ public class TestRequest extends TestCase {
                              .build();
         final var json = mapper.writeValueAsString(requests);
         final var deserd = mapper.readValue(json, Requests.class).request();
-        final var optionalRequests = new RequestFactory(deserd).optionalRequests();
+        final var optionalRequests = RequestFactory.optionalRequests(deserd);
         final var deserdOpen = optionalRequests.sourceOpen().get();
         assertEquals(name, deserdOpen.name());
         assertEquals(PORT, deserdOpen.port());

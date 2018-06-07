@@ -23,51 +23,51 @@ public final class RequestFactory {
      * specific subtype.
      * @param request the SrvRequest to be moved
      */
-    public RequestFactory(final SrvRequest request) {
+    private RequestFactory(SrvRequest request) {
         optionalRequests = request.accept(
             new RequestVisitor<OptionalRequests>() {
             @Override
-            public OptionalRequests visit(final SrvRequest r) {
+            public OptionalRequests visit(SrvRequest r) {
                 return ImmutableOptionalRequests.builder().build();
             }
 
             @Override
-            public OptionalRequests visit(final LifecycleGet r) {
+            public OptionalRequests visit(LifecycleGet r) {
                 return ImmutableOptionalRequests.builder()
                         .lifecycleGet(r)
                         .build();
             }
 
             @Override
-            public OptionalRequests visit(final LifecycleKill r) {
+            public OptionalRequests visit(LifecycleKill r) {
                 return ImmutableOptionalRequests.builder()
                         .lifecycleKill(r)
                         .build();
             }
 
             @Override
-            public OptionalRequests visit(final LifecycleStart r) {
+            public OptionalRequests visit(LifecycleStart r) {
                 return ImmutableOptionalRequests.builder()
                         .lifecycleStart(r)
                         .build();
             }
 
             @Override
-            public OptionalRequests visit(final SourceList r) {
+            public OptionalRequests visit(SourceList r) {
                 return ImmutableOptionalRequests.builder()
                         .sourceList(r)
                         .build();
             }
 
             @Override
-            public OptionalRequests visit(final SourceOpen r) {
+            public OptionalRequests visit(SourceOpen r) {
                 return ImmutableOptionalRequests.builder()
                         .sourceOpen(r)
                         .build();
             }
 
             @Override
-            public OptionalRequests visit(final SourceClose r) {
+            public OptionalRequests visit(SourceClose r) {
                 return ImmutableOptionalRequests.builder()
                         .sourceClose(r)
                         .build();
@@ -80,7 +80,30 @@ public final class RequestFactory {
      * which can be queried for the request.
      * @return an OptionalRequests instance.
      */
-    OptionalRequests optionalRequests() {
+    private OptionalRequests getOptionalRequests() {
         return optionalRequests;
     }
+
+    /**
+     * Create the OptionalRequests object.
+     * Up to one of the fields of the object
+     * will contain a request of a specific type.
+     * @param request the request to add to the
+     * OptionalRequests object.
+     * @return an OptionalRequests object.
+     */
+    public static OptionalRequests optionalRequests(SrvRequest request) {
+        return new RequestFactory(request).getOptionalRequests();
+    }
+
+    /**
+     * Return an OptionalRequests object,
+     * no requests in all fields.
+     * @return an empty OptionalRequests object
+     */
+    public static OptionalRequests empty() {
+        final var none = new SrvRequest() { };
+        return new RequestFactory(none) .getOptionalRequests();
+    }
+
 }
