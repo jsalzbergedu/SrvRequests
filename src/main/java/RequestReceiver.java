@@ -164,8 +164,8 @@ public final class RequestReceiver {
                     })
                 .flatMap((json) -> {
                         try {
-                            var req = mapper.readValue(json, Requests.class);
-                            return Optional.of(req);
+                            Requests r = mapper.readValue(json, Requests.class);
+                            return Optional.of(r);
                         } catch (IOException e) {
                             return Optional.empty();
                         }

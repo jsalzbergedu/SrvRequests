@@ -9,6 +9,7 @@ package com.ncsurobotics.srvrequests;
  * While RequestFactory isn't a proper factory,
  * it does handle the creation of OptionalRequests,
  * so its name isn't too far afield.
+ * @author Jacob Salzberg
  */
 public final class RequestFactory {
     /**
@@ -102,8 +103,9 @@ public final class RequestFactory {
      * @return an empty OptionalRequests object
      */
     public static OptionalRequests empty() {
-        final var none = new SrvRequest() { };
-        return new RequestFactory(none) .getOptionalRequests();
+        final SrvRequest none = new SrvRequest() { };
+        return new RequestFactory(none)
+                .getOptionalRequests();
     }
 
 }

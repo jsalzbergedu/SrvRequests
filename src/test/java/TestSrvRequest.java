@@ -13,7 +13,7 @@ import junit.framework.TestCase;
  * Tests for the source requests.
  * @author Jacob Salzberg
  */
-public class TestRequest extends TestCase {
+public class TestSrvRequest extends TestCase {
     /**
      * A random port to use
      */
@@ -69,25 +69,25 @@ public class TestRequest extends TestCase {
 
     @Test
     public void testOptionalRequests() {
-        var request = ImmutableLifecycleGet.builder().build();
-        var optionalRequests = RequestFactory.optionalRequests(request);
+        final LifecycleGet request = ImmutableLifecycleGet.builder().build();
+        final OptionalRequests requests = RequestFactory.optionalRequests(request);
         /*
          * Both of the following should fail
          * if OptionalRequests does not contain a LifecycleGet
          */
-        assertTrue(optionalRequests.lifecycleGet().isPresent());
-        optionalRequests.lifecycleGet().get();
+        assertTrue(requests.lifecycleGet().isPresent());
+        requests.lifecycleGet().get();
         /*
          * There should be no other feilds in optionalRequests
          */
-        assertFalse(optionalRequests.sourceList().isPresent());
+        assertFalse(requests.sourceList().isPresent());
     }
 
     @Test
     public void testLifecycleGet() throws IOException {
         setup();
-        final var get = ImmutableLifecycleGet.builder().build();
-        final var json = mapper.writeValueAsString(get);
+        final LifecycleGet get = ImmutableLifecycleGet.builder().build();
+        final String json = mapper.writeValueAsString(get);
         /*
          * When raw string literals come around
          * http://openjdk.java.net/jeps/326
@@ -100,8 +100,8 @@ public class TestRequest extends TestCase {
     @Test
     public void testLifecycleKill() throws IOException {
         setup();
-        final var kill = ImmutableLifecycleKill.builder().build();
-        final var json = mapper.writeValueAsString(kill);
+        final LifecycleKill kill = ImmutableLifecycleKill.builder().build();
+        final String json = mapper.writeValueAsString(kill);
         assertEquals("{\"@class\":\"com.ncsurobotics.srvrequests.ImmutableLifecycleKill\"}",
                      json);
     }
@@ -109,8 +109,8 @@ public class TestRequest extends TestCase {
     @Test
     public void testLifecycleStart() throws IOException {
         setup();
-        final var start = ImmutableLifecycleStart.builder().build();
-        final var json = mapper.writeValueAsString(start);
+        final LifecycleStart start = ImmutableLifecycleStart.builder().build();
+        final String json = mapper.writeValueAsString(start);
         assertEquals("{\"@class\":\"com.ncsurobotics.srvrequests.ImmutableLifecycleStart\"}",
                      json);
     }
@@ -118,11 +118,11 @@ public class TestRequest extends TestCase {
     @Test
     public void testSourceClose() throws IOException {
         setup();
-        final var close = ImmutableSourceClose.builder()
+        final SourceClose close = ImmutableSourceClose.builder()
                           .id((byte) 0)
                           .build();
         assertEquals(close.id(), 0);
-        final var json = mapper.writeValueAsString(close);
+        final String json = mapper.writeValueAsString(close);
         assertEquals("{\"@class\":\"com.ncsurobotics.srvrequests.ImmutableSourceClose\",\"id\":0}",
                      json);
     }
@@ -130,8 +130,8 @@ public class TestRequest extends TestCase {
     @Test
     public void testSourceList() throws IOException {
         setup();
-        final var list = ImmutableSourceList.builder().build();
-        final var json = mapper.writeValueAsString(list);
+        final SourceList list = ImmutableSourceList.builder().build();
+        final String json = mapper.writeValueAsString(list);
         assertEquals("{\"@class\":\"com.ncsurobotics.srvrequests.ImmutableSourceList\"}",
                      json);
     }
@@ -139,14 +139,14 @@ public class TestRequest extends TestCase {
     @Test
     public void testSourceOpen() throws IOException {
         setup();
-        final var name = "Test stream name";
-        final var open = ImmutableSourceOpen.builder()
-                         .name(name)
-                         .port(PORT)
-                         .build();
+        final String name = "Test stream name";
+        final SourceOpen open = ImmutableSourceOpen.builder()
+                                .name(name)
+                                .port(PORT)
+                                .build();
         assertEquals(open.name(), name);
         assertEquals(open.port(), PORT);
-        final var json = mapper.writeValueAsString(open);
+        final String json = mapper.writeValueAsString(open);
         assertEquals("{\"@class\":\"com.ncsurobotics.srvrequests.ImmutableSourceOpen\",\"name\":\"Test stream name\",\"port\":4006}",
                      json);
     }
@@ -154,18 +154,18 @@ public class TestRequest extends TestCase {
     @Test
     public void testDeserialize() throws IOException {
         setup();
-        final var name = "dummyname";
-        final var open = ImmutableSourceOpen.builder()
-                         .name(name)
-                         .port(PORT)
-                         .build();
-        final var requests = ImmutableRequests.builder()
-                             .request(open)
-                             .build();
-        final var json = mapper.writeValueAsString(requests);
-        final var deserd = mapper.readValue(json, Requests.class).request();
-        final var optionalRequests = RequestFactory.optionalRequests(deserd);
-        final var deserdOpen = optionalRequests.sourceOpen().get();
+        final String name = "dummyname";
+        final SourceOpen open = ImmutableSourceOpen.builder()
+                                .name(name)
+                                .port(PORT)
+                                .build();
+        final Requests requests = ImmutableRequests.builder()
+                                  .request(open)
+                                  .build();
+        final String json = mapper.writeValueAsString(requests);
+        final SrvRequest deserd = mapper.readValue(json, Requests.class).request();
+        final OptionalRequests oRequests = RequestFactory.optionalRequests(deserd);
+        final SourceOpen deserdOpen = oRequests.sourceOpen().get();
         assertEquals(name, deserdOpen.name());
         assertEquals(PORT, deserdOpen.port());
     }

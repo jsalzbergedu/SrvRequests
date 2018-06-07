@@ -140,10 +140,10 @@ public final class RequestSender {
      * @throws IOException if printing to the stream fails
      */
     public void send(SrvRequest request) throws IOException {
-        final var outgoing = ImmutableRequests.builder()
-                             .request(request)
-                             .build();
-        final var json = mapper.writeValueAsString(outgoing);
+        final Requests outgoing = ImmutableRequests.builder()
+                                  .request(request)
+                                  .build();
+        final String json = mapper.writeValueAsString(outgoing);
         printWriter.println(json);
         printWriter.flush();
     }
