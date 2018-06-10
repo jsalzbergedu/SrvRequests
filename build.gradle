@@ -28,9 +28,9 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-databind:2.9.5'
 
     // https://mvnrepository.com/artifact/org.multij/multij-processor
-    compile 'org.multij:multij-core:0.1'
-    annotationProcessor 'org.multij:multij-processor:0.1'
-    compile 'org.multij:multij-processor:0.1'
+    testCompile 'org.multij:multij-core:0.1'
+    testAnnotationProcessor 'org.multij:multij-processor:0.1'
+    testCompile 'org.multij:multij-processor:0.1'
 }
 
 checkstyle {
