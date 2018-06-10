@@ -51,6 +51,10 @@ public final class RequestReceiver {
          * an optional ObjectMapper.
          */
         public BuilderMapperStage reader(BufferedReader reader) {
+            if (reader == null) {
+                throw new IllegalArgumentException("Reader argument is null.");
+            }
+
             return new BuilderMapperStage(reader);
         }
 
@@ -62,6 +66,10 @@ public final class RequestReceiver {
          * an optional ObjectMapper.
          */
         public BuilderMapperStage reader(Reader reader) {
+            if (reader == null) {
+                throw new IllegalArgumentException("Reader argument is null.");
+            }
+
             return reader(new BufferedReader(reader));
         }
 
@@ -73,6 +81,10 @@ public final class RequestReceiver {
          * an optional ObjectMapper.
          */
         public BuilderMapperStage stream(InputStream stream) {
+            if (stream == null) {
+                throw new IllegalArgumentException("Stream argument is null.");
+            }
+
             // Will dispatch on reader(Reader), not reader(BufferedReader).
             return reader(new InputStreamReader(stream));
         }
@@ -86,6 +98,10 @@ public final class RequestReceiver {
          * @throws IOException if getInputStream fails.
          */
         public BuilderMapperStage socket(Socket socket) throws IOException {
+            if (socket == null) {
+                throw new IllegalArgumentException("Socket argument is null.");
+            }
+
             return stream(socket.getInputStream());
         }
     }
@@ -150,30 +166,19 @@ public final class RequestReceiver {
 
     /**
      * Receive a request.
-     * @return an OptionalRequests object.
+     * Map null values read from the input
+     * source into empty requests.
+     * @return a SrvRequest.
+     * @throws IOException if deserializing from JSON fails,
+     * or if reading from the input source fails.
      */
-    public OptionalRequests receive() {
-        return Optional.empty()
-                // s here is actually useless
-                .flatMap((s) -> {
-                        try {
-                            return Optional.ofNullable(reader.readLine());
-                        } catch (IOException e) {
-                            return Optional.empty();
-                        }
-                    })
-                .flatMap((json) -> {
-                        try {
-                            Requests r = mapper.readValue(json, Requests.class);
-                            return Optional.of(r);
-                        } catch (IOException e) {
-                            return Optional.empty();
-                        }
-                    })
-                .map((request) -> {
-                        return request.request();
-                    })
-                .map(RequestFactory::optionalRequests)
-                .orElseGet(RequestFactory::empty);
+    public SrvRequest receive() throws IOException {
+        final String json = reader.readLine();
+        if (json == null) {
+            return SrvRequest.empty();
+        }
+        final SrvRequest request = mapper.readValue(json, Requests.class)
+                                  .request();
+        return request;
     }
 }

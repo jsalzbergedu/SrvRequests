@@ -81,22 +81,82 @@ RequestReceiver receiver = RequestReceiver.builder()
                            .socket(socket)
                            .build();
 ```
-Here's where it gets complicated. There's a special container,
-`com.ncsurobotics.srvrequests.OptionalRequests`, that contains
-zero to one deserialized requests. You must check each of
-the feilds of `OptionalRequests` to see if you got
-any of the requests.
-(I am not happy with this API, and if there is a better
-way to dispatch on subtypes without using a visitor whose api may change,
-I would rather do that.)
+Here's where it gets complicated.
+To dispatch on the subtype of the request,
+one can either use the `com.ncsurobotics.srvrequests.RequestVisitor`
+interface, which is not only an unstable api but infact gaurenteed to break,
+or instead use [multij](http://www.multij.org/) to dispatch
+on the run time type of the object.
+Here's an example of the two strategies:
+
+
+#### RequestVisitor
+The RequestVisitor API is bound to change. If and when MultiJ gets to version
+1.0, the RequestVisitor will be deprecated.
 
 ```Java
+// Check if a request is a LifecycleGet request
+RequestVisitor visitor = new RequestVisitor<Boolean> {
+    Boolean visit(SrvRequest r) {
+        return false;
+    }
+
+    Boolean visit(LifecycleGet r) {
+        return true;
+    }
+
+    Boolean visit(LifecycleKill r) {
+        return false;
+    }
+
+    Boolean visit(LifecycleStart r) {
+        return false;
+    }
+
+    Boolean visit(SourceList r) {
+        return false;
+    }
+
+    Boolean visit(SourceList r) {
+        return false;
+    }
+
+    Boolean visit(SourceOpen r) {
+        return false;
+    }
+
+    Boolean visit(SourceClose r) {
+        return false;
+    }
+}
+boolean isLifecycleGet = request.accept(visitor);
+```
+
+#### MultiJ
+This is the more elegant and therefore perferred way to do it.
+
+```Java
+@org.multij.Module
+public interface LifecycleGetTester {
+    default boolean test(SrvRequest r) {
+        return false;
+    }
+
+    default boolean test(LifecycleGet r) {
+        return true;
+    }
+}
+
+LifecycleGetTester tester =
+    org.multij.MultiJ.instance(LifecycleGetTester.class);
+
+boolean isLifecycleGet = tester.test(request);
 ```
 
 ### Mapper option
 
-and, optionally, a `com.fasterxml.jackson.databind.ObjectMapper`.
-There should only be one `com.fasterxml.jackson.databind.ObjectMapper`
-instance per program; if you want to reuse an ObjectMapper,
-
-TODO
+Since there should only be one `com.fasterxml.jackson.databind.ObjectMapper`.
+per program, `RequestSender` and `RequestReceiver` both provide a
+`.mapper` option on their builder after `.socket`. If you have both a
+`RequestSender` and a `RequestReceiver` you should use this option, otherwise,
+you should ignore it.

@@ -1,16 +1,16 @@
 package com.ncsurobotics.srvrequests;
 import java.io.IOException;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.junit.Test;
+import org.multij.Module;
+import org.multij.MultiJ;
 
 import junit.framework.TestCase;
 
 /**
- * Tests for the source requests.
+ * Tests for all of the SrvRequests.
  * @author Jacob Salzberg
  */
 public class TestSrvRequest extends TestCase {
@@ -24,63 +24,15 @@ public class TestSrvRequest extends TestCase {
      */
     private ObjectMapper mapper;
 
-    /**
-     * For sending requests.
-     */
-    private RequestSender sender;
-
-    /**
-     * For receiving requests.
-     */
-    private RequestReceiver receiver;
-
-    /**
-     * Mock input stream.
-     */
-    private PipedInputStream input;
-
-    /**
-     * Mock output stream.
-     */
-    private PipedOutputStream output;
 
     /**
      * Set up the object mapper.
      * TODO get the @Before annotation to work
      */
     public void setup() {
-        try {
-            if (mapper == null) {
-                mapper = new ObjectMapper();
-                input = new PipedInputStream();
-                output = new PipedOutputStream(input);
-                receiver = RequestReceiver.builder()
-                           .stream(input)
-                           .mapper(mapper)
-                           .build();
-                sender = RequestSender.builder()
-                         .stream(output)
-                         .mapper(mapper)
-                         .build();
-            }
-        } catch (IOException e) {
+        if (mapper == null) {
+            mapper = new ObjectMapper();
         }
-    }
-
-    @Test
-    public void testOptionalRequests() {
-        final LifecycleGet request = ImmutableLifecycleGet.builder().build();
-        final OptionalRequests requests = RequestFactory.optionalRequests(request);
-        /*
-         * Both of the following should fail
-         * if OptionalRequests does not contain a LifecycleGet
-         */
-        assertTrue(requests.lifecycleGet().isPresent());
-        requests.lifecycleGet().get();
-        /*
-         * There should be no other feilds in optionalRequests
-         */
-        assertFalse(requests.sourceList().isPresent());
     }
 
     @Test
@@ -164,10 +116,24 @@ public class TestSrvRequest extends TestCase {
                                   .build();
         final String json = mapper.writeValueAsString(requests);
         final SrvRequest deserd = mapper.readValue(json, Requests.class).request();
-        final OptionalRequests oRequests = RequestFactory.optionalRequests(deserd);
-        final SourceOpen deserdOpen = oRequests.sourceOpen().get();
-        assertEquals(name, deserdOpen.name());
-        assertEquals(PORT, deserdOpen.port());
+        final DispatchSourceOpen dispatch =
+                MultiJ.instance(DispatchSourceOpen.class);
+        dispatch.dispatch(deserd, name, PORT);
     }
 
+    /**
+     * A multimethod for testDeserialize.
+     * @author Jacob Salzberg
+     */
+    @Module
+    public interface DispatchSourceOpen {
+        default void dispatch(SrvRequest request, String name, int port) {
+            throw new RuntimeException("Wrong type dispatched.");
+        }
+
+        default void dispatch(SourceOpen request, String name, int port) {
+            assertEquals(name, request.name());
+            assertEquals(port, request.port());
+        }
+    }
 }

@@ -4,6 +4,9 @@ package com.ncsurobotics.srvrequests;
  * A visitor for the requests,
  * To use this interface, make a concrete
  * RequestVisitor with the type of your choosing.
+ * This interface is perpetually unstable,
+ * and is gaurenteed to break every
+ * time a new kind of SrvRequest is added.
  * @param <T> a type, to be chosen by the implementor.
  * @author Jacob Salzberg
  */

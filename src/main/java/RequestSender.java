@@ -17,7 +17,7 @@ public final class RequestSender {
     /**
      * The object with which to write JSON.
      */
-    private final PrintWriter printWriter;
+    private final PrintWriter writer;
 
     /**
      * The object mapper that maps between json and types.
@@ -27,11 +27,15 @@ public final class RequestSender {
 
     /**
      * Construct the RequestSender with a PrintWriter.
-     * @param printWriter the writer with which to write the JSON.
+     * @param writer the writer with which to write the JSON.
      * @param mapper maps between json and Reqeusts
      */
-    private RequestSender(PrintWriter printWriter, ObjectMapper mapper) {
-        this.printWriter = printWriter;
+    private RequestSender(PrintWriter writer, ObjectMapper mapper) {
+        if (mapper == null) {
+            throw new IllegalArgumentException("Null mapper argument.");
+        }
+
+        this.writer = writer;
         this.mapper = mapper;
     }
 
@@ -49,6 +53,10 @@ public final class RequestSender {
          * an optional ObjectMapper.
          */
         public BuilderMapperStage writer(PrintWriter writer) {
+            if (writer == null) {
+                throw new IllegalArgumentException("Null writer argument.");
+            }
+
             return new BuilderMapperStage(writer);
         }
 
@@ -60,6 +68,9 @@ public final class RequestSender {
          * an optional ObjectMapper.
          */
         public BuilderMapperStage stream(OutputStream stream) {
+            if (stream == null) {
+                throw new IllegalArgumentException("Null stream argument.");
+            }
             return writer(new PrintWriter(stream, true));
         }
 
@@ -72,6 +83,9 @@ public final class RequestSender {
          * @throws IOException if getOutputStream fails.
          */
         public BuilderMapperStage socket(Socket socket) throws IOException {
+            if (socket == null) {
+                throw new IllegalArgumentException("Null stream argument.");
+            }
             return stream(socket.getOutputStream());
         }
     }
@@ -94,9 +108,9 @@ public final class RequestSender {
 
         /**
          * Construct the builder at the mapper stage.
-         * @param printWriter the required printWriter.
+         * @param writer the required PrintWriter.
          */
-        public BuilderMapperStage(PrintWriter printWriter) {
+        public BuilderMapperStage(PrintWriter writer) {
             this.writer = writer;
         }
 
@@ -144,8 +158,8 @@ public final class RequestSender {
                                   .request(request)
                                   .build();
         final String json = mapper.writeValueAsString(outgoing);
-        printWriter.println(json);
-        printWriter.flush();
+        writer.println(json);
+        writer.flush();
     }
 
 }

@@ -18,4 +18,13 @@ public interface SrvRequest {
     default <T> T accept(RequestVisitor<T> v) {
         return v.visit(this);
     }
+
+    /**
+     * Get the base case of the SrvRequest
+     * type heiarchy.
+     * @return a SrvRequest instance.
+     */
+    static SrvRequest empty() {
+        return new SrvRequest() { };
+    }
 }
