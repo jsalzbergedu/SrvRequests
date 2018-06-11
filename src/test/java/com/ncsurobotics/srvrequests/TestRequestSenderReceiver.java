@@ -105,9 +105,9 @@ public class TestRequestSenderReceiver extends TestCase {
         LifecycleGet request = ImmutableLifecycleGet.builder()
                                .build();
         sender.send(request);
-        writer.close();
+        sender.close();
         SrvRequest received = receiver.receive();
-        reader.close();
+        receiver.close();
         Dispatch dispatch = MultiJ.instance(Dispatch.class);
         dispatch.dispatch(received);
     }

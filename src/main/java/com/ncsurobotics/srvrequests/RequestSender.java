@@ -1,5 +1,6 @@
 package com.ncsurobotics.srvrequests;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
@@ -13,7 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Should be a Singleton.
  * @author Jacob Salzberg
  */
-public final class RequestSender {
+public final class RequestSender implements Closeable, AutoCloseable {
     /**
      * The object with which to write JSON.
      */
@@ -160,6 +161,14 @@ public final class RequestSender {
         final String json = mapper.writeValueAsString(outgoing);
         writer.println(json);
         writer.flush();
+    }
+
+    /**
+     * Close the output.
+     * @throws IOException if closing the output fails.
+     */
+    public void close() {
+        writer.close();
     }
 
 }

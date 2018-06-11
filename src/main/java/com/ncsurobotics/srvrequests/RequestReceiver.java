@@ -1,6 +1,7 @@
 package com.ncsurobotics.srvrequests;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -15,7 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Should be a Singleton.
  * @author Jacob Salzberg
  */
-public final class RequestReceiver {
+public final class RequestReceiver implements Closeable, AutoCloseable {
     /**
      * The buffered reader from which to read
      * the input.
@@ -180,5 +181,13 @@ public final class RequestReceiver {
         final SrvRequest request = mapper.readValue(json, Requests.class)
                                   .request();
         return request;
+    }
+
+    /**
+     * Close the input source.
+     * @throws IOException if closing the input source fails.
+     */
+    public void close() throws IOException {
+        reader.close();
     }
 }
