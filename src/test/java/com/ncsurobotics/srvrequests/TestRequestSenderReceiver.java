@@ -1,10 +1,12 @@
 package com.ncsurobotics.srvrequests;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.PipedInputStream;
-import java.io.PipedOutputStream;
 import java.io.PrintWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -31,12 +33,17 @@ public class TestRequestSenderReceiver extends TestCase {
     /**
      * Mock input stream.
      */
-    private PipedInputStream input;
+    private FileInputStream input;
 
     /**
      * Mock output stream.
      */
-    private PipedOutputStream output;
+    private FileOutputStream output;
+
+    /**
+     * A temporary file to write in.
+     */
+    private Path tempFile;
 
     /**
      * An object mapper to deserialize objects with.
@@ -58,29 +65,29 @@ public class TestRequestSenderReceiver extends TestCase {
      * TODO get the @Before annotation to work
      */
     public void setup() throws IOException {
+        Path parent = Files.createTempDirectory("RequestSenderReceiver");
+        Path child = parent.resolve("temp.json");
+        Files.deleteIfExists(child);
+        tempFile = Files.createFile(child);
+
         if (mapper == null) {
             mapper = new ObjectMapper();
         }
+
         if (input == null) {
-            input = new PipedInputStream();
+            input = new FileInputStream(tempFile.toFile());
         }
 
         if (output == null) {
-            output = new PipedOutputStream(input);
+            output = new FileOutputStream(tempFile.toFile());
         }
 
         if (receiver == null) {
-            receiver = RequestReceiver.builder()
-                       .stream(input)
-                       .mapper(mapper)
-                       .build();
+            receiver = RequestReceiver.builder().stream(input).mapper(mapper).build();
         }
 
         if (sender == null) {
-            sender = RequestSender.builder()
-                     .stream(output)
-                     .mapper(mapper)
-                     .build();
+            sender = RequestSender.builder().stream(output).mapper(mapper).build();
         }
 
         if (writer == null) {
@@ -90,7 +97,6 @@ public class TestRequestSenderReceiver extends TestCase {
         if (reader == null) {
             reader = new BufferedReader(new InputStreamReader(input));
         }
-
     }
 
     @Test
@@ -98,34 +104,12 @@ public class TestRequestSenderReceiver extends TestCase {
         setup();
         LifecycleGet request = ImmutableLifecycleGet.builder()
                                .build();
-        Thread send = new Thread(() -> {
-                writer.println("begin");
-                writer.flush();
-                try {
-                    sender.send(request);
-                } catch (IOException e) {
-                    throw new RuntimeException(e.getMessage());
-                }
-                writer.close();
-        });
-
-        Thread receive = new Thread(() -> {
-            try {
-                while (reader.readLine() == null) {
-                    // Do nothing
-                    // This loop will break when "First line" is received
-                }
-                SrvRequest received = receiver.receive();
-                reader.close();
-                Dispatch dispatch = MultiJ.instance(Dispatch.class);
-                dispatch.dispatch(received);
-            } catch (IOException e) {
-                throw new RuntimeException(e.getMessage());
-            }
-        });
-        send.start();
-        receive.start();
-
+        sender.send(request);
+        writer.close();
+        SrvRequest received = receiver.receive();
+        reader.close();
+        Dispatch dispatch = MultiJ.instance(Dispatch.class);
+        dispatch.dispatch(received);
     }
 
     /**
