@@ -119,13 +119,13 @@ public class TestRequestSenderReceiver extends TestCase {
      */
     @Module
     public interface Dispatch {
+        default void dispatch(SrvRequest request) {
+            throw new RuntimeException("Incorrect type dispatched.");
+        }
+
         default void dispatch(LifecycleGet request) {
             // The correct type was dispatched.
             // Nothing has to be done.
-        }
-
-        default void dispatch(SrvRequest request) {
-            throw new RuntimeException("Incorrect type dispatched.");
         }
     }
 }
