@@ -138,19 +138,19 @@ This is the more elegant and therefore perferred way to do it.
 ```Java
 @org.multij.Module
 public interface LifecycleGetTester {
-    default boolean test(SrvRequest r) {
-        return false;
-    }
-
     default boolean test(LifecycleGet r) {
         return true;
+    }
+
+    default boolean test(SrvRequest r) {
+        return false;
     }
 }
 
 LifecycleGetTester tester =
     org.multij.MultiJ.instance(LifecycleGetTester.class);
 
-boolean isLifecycleGet = tester.test(request);
+boolean isLifecycleGet = tester.test(request); // returns true
 ```
 
 ### Mapper option
