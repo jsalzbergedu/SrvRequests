@@ -1,44 +1,51 @@
 /**
- * Requests that control SRV.
+ * This package contains definitions for
+ * requests that control SRV.
  * This library uses Immutables and GSON
  * for creating value objects and serializing those objects
  * respectivley.
  * To create one of these requests, do something like
  * <pre>
  * {@code
- * final var request = ImmutableRequestName.builder()
- *                     .field1(value1)
- *                     .field2(value2)
- *                     .field3(value3)
- *                     .build();
+ * final SourceOpen request = ImmutableSourceOpen.builder()
+ *                            .name("sourcename")
+ *                            .port(1000)
+ *                            .build();
  * }
  * </pre>
  * And then to send it, use
  * <pre>
  * {@code
- * var requestSender = new RequestSender.builder()
- *                         .address(string)
- *                         .port(number)
- *                         .build();
+ * RequestSender sender = RequestSender.builder()
+ *                       .socket(outputSocket);
+ *                       .build();
  * requestSender.send(request);
  * }
  * </pre>
- * Finally, to dispatch on the request, one can do something like
+ * Then, on the other end, one receives the request
  * <pre>
  * {@code
- * class IsLifecycleGet {
- *     public boolean visit(Request r) {
- *         // General case, so return false
- *         return false;
- *     }
- *
- *     public boolean visit(LifecycleGet r) {
- *         // In this case, it is LifecycleGet, so return true
+ * RequestReceiver receiver = RequestReceiver.builder()
+ *                            .socket(inputSocket)
+ *                            .build();
+ * SrvRequest request = receiver.receive()
+ * }
+ * </pre>
+ * Finally, to dispatch on the request, one can
+ * use an org.multij.Module multimethod
+ * <pre>
+ * {@code
+ * @org.multij.Module
+ * public interface Tester {
+ *     default boolean isSourceOpen(SourceOpen request) {
  *         return true;
  *     }
+ *     default boolean isSourceOpen(SrvRequest request) {
+ *         return false;
+ *     }
  * }
- * var isLifecycleGet = IsLifecycleGet.visit(requst);
- * }
+ * Tester tester = org.multij.MultiJ.instance(Tester.class);
+ * tester.isSourceOpen(request); // should return true
  * </pre>
  */
 package com.ncsurobotics.srvrequests;
